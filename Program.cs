@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 
 namespace ReadBarCode
 {
@@ -93,27 +94,45 @@ namespace ReadBarCode
                         {
                             guid = Guid.NewGuid().ToString();
                             ConvertPDF2Image(direc_pdf + dt.Rows[0]["FILENAME"], direc_img, guid, 1, 1, ImageFormat.Jpeg, Definition.Ten);
-                            BarcodeDecoder barcodeDecoder = new BarcodeDecoder();
-                            if (File.Exists(direc_img + guid + ".Jpeg"))
+                            //BarcodeDecoder barcodeDecoder = new BarcodeDecoder();
+                            string fileName = direc_img + guid + ".Jpeg";
+                            if (File.Exists(fileName))
                             {
-                                System.Drawing.Bitmap image = new System.Drawing.Bitmap(direc_img + guid + ".Jpeg");
-                                Dictionary<DecodeOptions, object> decodingOptions = new Dictionary<DecodeOptions, object>();
-                                List<BarcodeFormat> possibleFormats = new List<BarcodeFormat>(10);
-                                possibleFormats.Add(BarcodeFormat.Code128);
-                                possibleFormats.Add(BarcodeFormat.EAN13);
-                                decodingOptions.Add(DecodeOptions.TryHarder, true);
-                                decodingOptions.Add(DecodeOptions.PossibleFormats, possibleFormats);
-                                Result decodedResult = barcodeDecoder.Decode(image, decodingOptions);
-                                if (decodedResult != null)//有些PDF文件并无条形码
+                                //System.Drawing.Bitmap image = new System.Drawing.Bitmap(direc_img + guid + ".Jpeg");
+                                Image primaryImage = Image.FromFile(fileName);
+                                //Dictionary<DecodeOptions, object> decodingOptions = new Dictionary<DecodeOptions, object>();
+                                //List<BarcodeFormat> possibleFormats = new List<BarcodeFormat>(10);
+                                //possibleFormats.Add(BarcodeFormat.Code128);
+                                //possibleFormats.Add(BarcodeFormat.EAN13);
+                                //decodingOptions.Add(DecodeOptions.TryHarder, true);
+                                //decodingOptions.Add(DecodeOptions.PossibleFormats, possibleFormats);
+                                //Result decodedResult = barcodeDecoder.Decode(image, decodingOptions);
+                                using (ZBar.ImageScanner scanner = new ZBar.ImageScanner())
                                 {
-                                    decoded = decodedResult.Text;
-                                    fn_share.systemLog(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " decoded：" + decoded + "\r\n");
-                                    barcode = barconvert(decoded);//编码转换 
-                                    fn_share.systemLog(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " barcode：" + barcode + "\r\n");
+                                    scanner.SetConfiguration(ZBar.SymbolType.QRCODE, ZBar.Config.Enable, 1);
+                                    List<ZBar.Symbol> symbols = new List<ZBar.Symbol>();
+                                    System.Diagnostics.Stopwatch watch = new Stopwatch();
+                                    watch.Start();
+                                    symbols = scanner.Scan((Image)primaryImage);
+                                    watch.Stop();
+                                    TimeSpan timeSpan = watch.Elapsed;
+                                    if (symbols != null && symbols.Count > 0)
+                                    {
+                                        //string result = "扫描执行时间：" + timeSpan.TotalMilliseconds.ToString();
+                                        //symbols.ForEach(s => result += ",条码内容:" + s.Data + " 条码质量:" + s.Type + Environment.NewLine);
+                                        //Console.WriteLine(result);
+                                        decoded = symbols[0].Data;
+                                    }
+                                    if (decoded != null)//有些PDF文件并无条形码
+                                    {
+                                        fn_share.systemLog(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " decoded：" + decoded + "\r\n");
+                                        barcode = barconvert(decoded);//编码转换 
+                                        fn_share.systemLog(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " barcode：" + barcode + "\r\n");
 
-                                    sql = "update list_order set cusno='" + barcode + "' where code='" + jo.Value<string>("ordercode") + "'";
-                                    DBMgr.ExecuteNonQuery(sql);
-                                    fn_share.systemLog(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  list_order.code：" + jo.Value<string>("ordercode") + "   更新sql结束 \r\n");
+                                        sql = "update list_order set cusno='" + barcode + "' where code='" + jo.Value<string>("ordercode") + "'";
+                                        DBMgr.ExecuteNonQuery(sql);
+                                        fn_share.systemLog(filename, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  list_order.code：" + jo.Value<string>("ordercode") + "   更新sql结束 \r\n");
+                                    }
                                 }
                             }
                         }
