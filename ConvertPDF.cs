@@ -66,6 +66,7 @@ namespace ReadBarCode
             return flag;
         }
 
+       
         private static PdfObject FindImageInPDFDictionary(PdfDictionary pg)
         {
             PdfDictionary res = (PdfDictionary)PdfReader.GetPdfObject(pg.Get(PdfName.RESOURCES));

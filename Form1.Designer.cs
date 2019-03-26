@@ -52,6 +52,7 @@
             this.button2.TabIndex = 1;
             this.button2.Text = "WEB 端 识 别";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
             // 

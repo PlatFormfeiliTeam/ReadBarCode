@@ -180,7 +180,7 @@ namespace ReadBarCode
                         {
                             DateTime d1 = DateTime.Now;
                             guid = Guid.NewGuid().ToString();
-                            ConvertPDF.pdfToPic(direc_pdf + dt.Rows[0]["FILENAME"], direc_img, guid, 1, 1, ImageFormat.Jpeg);
+                            ConvertPDF.pdfToPic(direc_pdf + dt.Rows[0]["FILENAME"], direc_img, guid, 1, 1, ImageFormat.Jpeg);//pdf转图片
                             string fileName = direc_img + guid + ".Jpeg";
                             fn_share.systemLog(filename, "=== ConvertToImage——" + (DateTime.Now - d1) + "\r\n");
                             if (File.Exists(fileName))
@@ -292,6 +292,11 @@ namespace ReadBarCode
             Rectangle cloneRect = new Rectangle(X, Y, Width, Height);
             Bitmap cloneBmp = Bmp.Clone(cloneRect, Bmp.PixelFormat);
             cloneBmp.Save(path);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
